@@ -1,6 +1,7 @@
 package it.unibo.memory
 
 import dev.langchain4j.data.document.loader.FileSystemDocumentLoader
+import dev.langchain4j.data.document.splitter.DocumentSplitters
 import dev.langchain4j.data.segment.TextSegment
 import dev.langchain4j.model.ollama.{OllamaChatModel, OllamaEmbeddingModel}
 import dev.langchain4j.rag.content.retriever.EmbeddingStoreContentRetriever
@@ -37,17 +38,18 @@ def testRag(): Unit =
     .build()
 
   val ingestResult = EmbeddingStoreIngestor.builder()
+    .documentSplitter(DocumentSplitters.recursive(150, 15)) // Smaller segment size to break sentences cleanly and avoid embedding the whole document
     .embeddingModel(embeddingModel)
     .embeddingStore(store)
     .build()
     .ingest(docs)
 
-  println(store.size())
+  println(s"Total ingested text segment chunks: ${store.size()}")
 
   val retriever = EmbeddingStoreContentRetriever.builder()
     .embeddingStore(store)
     .embeddingModel(embeddingModel)
-    .maxResults(1) // Retrieve top 3 relevant chunks
+    .maxResults(3) // Retrieve top 3 relevant chunks
     .build()
 
   val eelResult = retriever.retrieve(Query.from("Where do European eels spawn?"))

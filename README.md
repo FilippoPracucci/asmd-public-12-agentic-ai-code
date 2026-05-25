@@ -1,77 +1,86 @@
-# Large Language Model - Primer
-## Practical Guide to Large Language Models Usage
+# Agentic AI - Architectures, Patterns & Evaluation
+## Practical Guide to Core Agentic Patterns and LLM Workflows in Scala 3
 
-This primer covers the essentials of working with Large Language Models (LLMs) for various applications. You'll learn:
+This repository provides a progressive guide to implementing Agentic AI patterns using Scala 3, langchain4j, and langchain4j-agentic. 
+The project covers structured output parsing, tool integration, conversational memory,
+retrieval-augmented generation (RAG), 
+and multi-agent system orchestration.
 
-1. How to programmatically interact with LLMs
-2. How to leverage embeddings for text similarity search
-3. How to generate text using LLMs
-4. Some prompt engineering techniques
-5. A simple application with an LLM in the loop
+---
 
 ## Requirements
 
-We'll use the `ollama` library to download and run pre-trained LLMs.
-We will also leverage gemini as a reference for state of the art LLMs.
+The codebase leverages local Small Language Models (SLMs) and Embeddings via Ollama, 
+along with Google Gemini for evaluation.
 
-- Install the library following instructions in the [official repository](https://ollama.com/download)
-- Download the required models:
-```bash
-# Small LLM model
-ollama pull smollm2:135m
+1. Install Ollama by following the instructions in the [official repository](https://ollama.com/download).
+2. Download the required models:
+   ```bash
+   # Small Language Model for reasoning and text generation
+   ollama pull gemma4:e2b
 
-# Large embedding model
-ollama pull mxbai-embed-large
+   # Models optimized for tool execution and function calling
+   ollama pull qwen3.5:4b
+   ollama pull qwen2.5:latest
 
-# Good performing SLM model
-ollama pull qwen3.5:0.8b
-```
+   # Embedding model for RAG and vector similarity search
+   ollama pull ibm/granite-embedding:30m
+   ```
+3. Obtain a Google Gemini API Key from [Google AI Studio](https://aistudio.google.com/api-keys) to run the verification and evaluation suite.
 
-To check the available models, run:
-```bash
-ollama list
-```
-To verify the local installation, just run:
-```bash
-ollama run smollm2:135m
-```
-
-For this primer, we'll use:
-- `smollm2:135m` - a small LLM model
-- `mxbai-embed-large` - a large embedding model
-- `qwen3:0.6b` - as a good performing SLM model
-- A recent model from google (gemini or gemma) as gold reference (please get the gemini api from here: https://aistudio.google.com/api-keys)
-
-
-Feel free to experiment with other models to compare performance.
-
-While ollama is accessed via HTTP requests, we'll use [langchain4j](https://github.com/langchain4j/langchain4j) to simplify interactions. We'll also use the `smile` library for visualizations and mathematical operations.
+---
 
 ## Project Structure
 
-The project is organised into several sections:
+The project code is organized progressively under the `it.unibo` package:
 
-### Core Examples
+### 1. AI Services and Structured I/O (`it.unibo.services`)
+* **`SentimentAnalyzer.scala`**: Demonstrates a basic binary classification AI Service returning a native Scala `Boolean`.
+* **`TicTacToe.scala`**: A structured LLM-in-the-loop application where the LLM's moves are parsed into a structured `Move` record using JSON response formatting.
 
-- **`it.unibo.basics`**: Core LLM interaction classes
-    - `EmbeddingBaseExample`: Demonstrates embedding-based text similarity search
-    - `EmbeddingVisualizationAndSearch`: Shows embedding visualization and search techniques
-    - `TextGenerationExample`: Covers text generation with LLMs
+### 2. Tools and Function Calling (`it.unibo.tools`)
+* **`MathModule.scala`**: Exposes double-precision arithmetic operations annotated with `@Tool`.
+* **`ToolExample.scala`**: Demonstrates how tool specifications are programmatically generated.
+* **`ToolsViaZeroShot.scala`**: Integrates the `MathModule` tools with an active AI service to let the LLM solve composite arithmetic queries.
 
-- **`it.unibo.chat`**: Contains examples of agent-to-agent interactions
+### 3. Memory and Retrieval-Augmented Generation (`it.unibo.memory`)
+* **`MemoryExample.scala`**: Implements conversational state retention using `MessageWindowChatMemory`.
+* **`RagExample.scala`**: Demonstrates document ingestion, vector storage using an in-memory store, and retrieval of facts from local scientific articles under `src/main/resources/docs`.
 
-- **`it.unibo.prompt`**: Demonstrates prompt engineering techniques to enhance LLM performance
+### 4. Advanced Agentic Architectures (`it.unibo.agents`)
+* **`ScopeExample.scala`**: Showcases the use of `AgenticScope` as a shared blackboard (state sharing), an automatic invocation registry, and a tool for process state serialization/deserialization for failure recovery.
+* **`UnifiedAgentExample.scala`**: Demonstrates an orchestrated multi-agent system coordinating specialized subagents—RAG research, MathModule tool execution, and document formatting—under a central Supervisor Agent.
+* **Modular Workflow Micro-Examples (Strongly Typed Declarative):**
+  * **`SequentialWorkflowExample.scala`**: Direct sequential pipeline of agents.
+  * **`LoopWorkflowExample.scala`**: Programmatic feedback/refinement loops.
+  * **`ParallelWorkflowExample.scala`**: Concurrent execution of independent agents.
+  * **`ParallelMapperExample.scala`**: Concurrent mapping of a single agent over collections.
+  * **`ConditionalWorkflowExample.scala`**: Dynamic branching based on blackboard state predicates, utilizing fallbacks.
+  * **`SupervisorWorkflowExample.scala`**: Central LLM coordination and specialized routing.
 
-### LLM-in-the-Loop Applications
+### 5. Evaluation and Verification (`it.unibo.verification`)
+* **`Evaluator.scala`**: Implements the LLM-as-a-Judge technique to evaluate answers generated by local models and compute the unbiased `pass@k` metric.
 
-- **`it.unibo.tictactoe`**: A Tic Tac Toe game with an LLM-powered AI opponent (MVC architecture)
-    - `model` — Domain model: `Board`, `Player`, `TicTacToe` game logic
-    - `view` — Swing-based GUI: `SwingTicTacToeView`, `BoardView`
-    - `controller` — Game orchestration and AI integration:
-        - `GameController`, `PlayerLogic`, `UserPlayer` — game flow and human input
-        - `AIPlayer` — LLM-backed player with retry and fallback logic
-        - `controller.prompt` — `TicTacToePrompt`, `JsonMovePrompt` — prompt construction for the AI
-        - `controller.parser` — `MoveParser`, `GsonMoveParser`, `RegexMoveParser` — response parsing strategies
-        - `controller.formatter` — `BoardFormatter`, `TextBoardFormatter` — board-to-text formatting for prompts
-    - `App` — Entry point (human vs. AI)
+## Running the Code
+
+Use SBT to run the examples:
+
+```bash
+sbt run
+```
+Select the class index you wish to run when prompted.
+
+Alternatively, run specific main classes directly:
+```bash
+sbt "runMain it.unibo.memory.testRag"
+sbt "runMain it.unibo.agents.runScopeExample"
+sbt "runMain it.unibo.agents.runUnifiedExample"
+sbt "runMain it.unibo.agents.runSequentialExample"
+sbt "runMain it.unibo.agents.runLoopExample"
+sbt "runMain it.unibo.agents.runParallelExample"
+sbt "runMain it.unibo.agents.runParallelMapperExample"
+sbt "runMain it.unibo.agents.runConditionalExample"
+sbt "runMain it.unibo.agents.runSupervisorWorkflowExample"
+sbt "runMain it.unibo.verification.passKForQuestions YOUR_GEMINI_API_KEY"
+```
 
