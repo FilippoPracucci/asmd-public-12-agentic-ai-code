@@ -15,15 +15,19 @@ import dev.langchain4j.service.{AiServices, SystemMessage, UserMessage, V}
  * 3. Define the next method with a RobotState argument annotated with @V.
  */
 trait RobotAgent:
-  /*
-   * TODO! Implement this trait to define the agent's behavior and interaction format.
-   */
+  @SystemMessage(Array("You are a robot agent that can perform actions in a grid environment to reach the goal."))
   def foo: Unit = {}
 
   
   // For compilation purposes while starting the exercise, we leave a placeholder signature.
   // You can modify this as needed when implementing.
-  def next(state: RobotState): Unit = ???
+  @UserMessage(Array("""
+      Given the current robot state, what is your next move? Robot state: {{state}}. Consider the constraints:
+        - position._1 >= 0 and <= environment.width
+        - position._2 >= 0 and <= environment.height
+        - holdingObject true to release it or false to grab it
+  """))
+  def next(@V("state") state: RobotState): AgentsAction = ???
 
 @main
 def runRobotSimulation(): Unit =
